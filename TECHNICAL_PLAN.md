@@ -41,7 +41,7 @@
 |-------|------------|-----------|
 | Primary DB | **PostgreSQL 16** | Relational integrity, JSON support |
 | Cache | **Redis** | Session, vector cache, rate limiting |
-| AI Runtime | **MiniMax-M2.7 API** | Intent classification, response generation |
+| AI Runtime | **OpenAI GPT-4o-mini** | Intent classification, response generation |
 | Search | **PostgreSQL pg_vector** | Semantic policy search |
 | Deployment | **Docker** | Consistent environments |
 

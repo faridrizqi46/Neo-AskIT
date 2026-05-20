@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 enum EmployeeRole {
@@ -58,6 +60,8 @@ model Employee {
   sessions Session[]
 
   @@map("employees")
+  @@index([employeeId])
+  @@index([email])
 }
 
 model Request {
@@ -78,6 +82,10 @@ model Request {
   actions   Action[]
 
   @@map("requests")
+  @@index([status])
+  @@index([intent])
+  @@index([employeeId])
+  @@index([createdAt])
 }
 
 model Message {
@@ -93,6 +101,8 @@ model Message {
   sender  Employee @relation(fields: [senderId], references: [id])
 
   @@map("messages")
+  @@index([requestId])
+  @@index([createdAt])
 }
 
 model Policy {

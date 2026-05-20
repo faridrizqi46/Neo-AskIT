@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { employeeRepo } from '../repositories/employee.repo';
+import { requestRepo } from '../repositories/request.repo';
 import { authMiddleware } from './auth';
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -78,15 +79,14 @@ export async function adminRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/analytics', { preHandler: [authMiddleware] }, async (request, reply) => {
+    const analytics = await requestRepo.getAnalytics();
     return reply.send({
-      totalRequests: 150,
-      openRequests: 23,
-      avgResolutionTime: '2.5 hours',
-      topIntents: [
-        { intent: 'password_reset', count: 45 },
-        { intent: 'email_access', count: 32 },
-        { intent: 'vpn_setup', count: 18 },
-      ],
+      totalRequests: analytics.totalRequests,
+      openRequests: analytics.openRequests,
+      avgResolutionTime: analytics.avgResolutionTime
+        ? `${analytics.avgResolutionTime} hours`
+        : 'N/A',
+      topIntents: analytics.topIntents,
     });
   });
 
@@ -96,5 +96,43 @@ export async function adminRoutes(fastify: FastifyInstance) {
       maxIntentConfidence: 0.85,
       rateLimitPerMinute: 100,
     });
+  });
+
+  fastify.get('/tickets/escalated', { preHandler: [authMiddleware] }, async (request, reply) => {
+    const user = request.user as { role: string };
+    if (user.role !== 'support' && user.role !== 'admin') {
+      return reply.status(403).send({ error: 'Access denied' });
+    }
+    const tickets = await requestRepo.findEscalated();
+    return reply.send({ tickets });
+  });
+
+  fastify.patch('/tickets/:id/assign', { preHandler: [authMiddleware] }, async (request, reply) => {
+    const user = request.user as { role: string };
+    if (user.role !== 'support' && user.role !== 'admin') {
+      return reply.status(403).send({ error: 'Access denied' });
+    }
+    const { id } = request.params as { id: string };
+    const existing = await requestRepo.findById(id);
+    if (!existing) {
+      return reply.status(404).send({ error: 'Ticket not found' });
+    }
+    const updated = await requestRepo.assignToSupport(id, user.sub);
+    return reply.send(updated);
+  });
+
+  fastify.patch('/tickets/:id/resolve', { preHandler: [authMiddleware] }, async (request, reply) => {
+    const user = request.user as { role: string };
+    if (user.role !== 'support' && user.role !== 'admin') {
+      return reply.status(403).send({ error: 'Access denied' });
+    }
+    const { id } = request.params as { id: string };
+    const { resolution } = request.body as { resolution?: string };
+    const existing = await requestRepo.findById(id);
+    if (!existing) {
+      return reply.status(404).send({ error: 'Ticket not found' });
+    }
+    const resolved = await requestRepo.addResolution(id, resolution || '');
+    return reply.send(resolved);
   });
 }

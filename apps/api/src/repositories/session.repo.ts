@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 interface SessionData {
   id: string;
   employeeId: string;
-  context: Record<string, unknown>;
+  context: any;
   lastIntent: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -23,7 +23,7 @@ export const sessionRepo = {
     return prisma.session.create({
       data: {
         employeeId: data.employeeId,
-        context: data.context || {},
+        context: (data.context || {}) as any,
         expiresAt,
       },
     });
@@ -46,7 +46,7 @@ export const sessionRepo = {
     return prisma.session.update({
       where: { id },
       data: {
-        context,
+        context: context as any,
         updatedAt: new Date(),
       },
     });

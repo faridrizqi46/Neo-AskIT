@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { requests as requestsApi } from '../../lib/api';
+import { requests as requestsApi } from '../../../lib/api';
 
 interface Request {
   id: string;

@@ -1,6 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { intentService } from '../services/intent.service';
+import { aiService } from '../services/ai.service';
+import { actionService } from '../services/action.service';
 import { sessionRepo } from '../repositories/session.repo';
+import { messageRepo } from '../repositories/message.repo';
+import { requestRepo } from '../repositories/request.repo';
 import { authMiddleware } from './auth';
 
 interface AuthUser {
@@ -9,12 +13,15 @@ interface AuthUser {
   role: string;
 }
 
+const HIGH_CONFIDENCE_THRESHOLD = 0.85;
+
 export async function chatRoutes(fastify: FastifyInstance) {
   fastify.post('/message', { preHandler: [authMiddleware] }, async (request, reply) => {
     const { content, sessionId } = request.body as { content: string; sessionId?: string };
     const user = request.user as AuthUser;
 
     let activeSessionId: string;
+    let activeRequestId: string | null = null;
 
     if (!sessionId) {
       const session = await sessionRepo.create({
@@ -30,31 +37,60 @@ export async function chatRoutes(fastify: FastifyInstance) {
       activeSessionId = sessionId;
     }
 
-    const classification = intentService.classify(content);
+    const classification = await intentService.classify(content);
     await sessionRepo.updateLastIntent(activeSessionId, classification.intent);
 
+    if (classification.confidence >= HIGH_CONFIDENCE_THRESHOLD && !activeRequestId) {
+      const categoryMap: Record<string, string> = {
+        password_reset: 'account',
+        email_access: 'account',
+        email_password: 'account',
+        account_locked: 'account',
+        vpn_setup: 'network',
+        vpn_issue: 'network',
+        wifi_issue: 'network',
+        laptop_slow: 'hardware',
+        laptop_wont_start: 'hardware',
+        software_request: 'software',
+        software_install: 'software',
+        security_incident: 'security',
+        permission_request: 'access',
+      };
+
+      const category = categoryMap[classification.intent] || 'general';
+
+      const newRequest = await requestRepo.create({
+        employeeId: user.sub,
+        title: `${classification.intent.replace(/_/g, ' ')} - ${content.substring(0, 50)}`,
+        category,
+        priority: classification.intent === 'security_incident' ? 'urgent' : 'medium',
+        intent: classification.intent,
+      });
+      activeRequestId = newRequest.id;
+    }
+
     const suggestedActions = intentService.getSuggestedActions(classification.intent);
+    const responseData = await aiService.generateResponse(classification.intent, { ...classification.entities, query: content });
+    const { text: responseText, policies } = responseData;
 
-    let responseText = 'I understand. How can I help you with IT support today?';
+    const actions = actionService.getActionsForIntent(classification.intent);
 
-    switch (classification.intent) {
-      case 'password_reset':
-        responseText = 'I can help you reset your password. Please click the link below to start the password reset process.';
-        break;
-      case 'email_access':
-        responseText = 'I can help you with your email access issue. Can you describe what happens when you try to sign in?';
-        break;
-      case 'vpn_setup':
-        responseText = 'I can assist with VPN setup. Have you tried using the self-service VPN portal? I can guide you through the steps.';
-        break;
-      case 'laptop_issue':
-        responseText = 'I see you\'re experiencing a laptop issue. Let me help you troubleshoot. What specific problem are you encountering?';
-        break;
-      case 'security_incident':
-        responseText = 'This sounds like a security concern. Please provide more details so we can take appropriate action immediately.';
-        break;
-      default:
-        responseText = 'I understand your request. Let me assist you with that.';
+    if (activeRequestId) {
+      await messageRepo.create({
+        requestId: activeRequestId,
+        senderId: user.sub,
+        content,
+        messageType: 'user',
+        metadata: { intent: classification.intent, confidence: classification.confidence },
+      });
+
+      await messageRepo.create({
+        requestId: activeRequestId,
+        senderId: user.sub,
+        content: responseText,
+        messageType: 'assistant',
+        metadata: { intent: classification.intent, confidence: classification.confidence, policies },
+      });
     }
 
     return reply.send({
@@ -63,10 +99,9 @@ export async function chatRoutes(fastify: FastifyInstance) {
       intent: classification.intent,
       confidence: classification.confidence,
       sessionId: activeSessionId,
-      actions: suggestedActions.map((action) => ({
-        type: action.includes('form') ? 'form' : 'redirect',
-        label: action.replace(/_/g, ' '),
-      })),
+      requestId: activeRequestId,
+      actions,
+      policies,
       entities: classification.entities,
     });
   });
@@ -74,8 +109,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
   fastify.post('/intent/classify', { preHandler: [authMiddleware] }, async (request, reply) => {
     const { content, history } = request.body as { content: string; history?: string[] };
 
-    const fullContent = history ? [...history, content].join(' ') : content;
-    const classification = intentService.classify(fullContent);
+    const classification = await intentService.classify(content, history);
 
     return reply.send({
       intent: classification.intent,
