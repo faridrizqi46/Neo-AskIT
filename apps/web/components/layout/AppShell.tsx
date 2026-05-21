@@ -82,11 +82,19 @@ function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg'
 export function AppShell({ children, user, navigation = defaultNavigation }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
+  const userRole = user?.role || 'employee';
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+
+  const filteredNavigation = navigation.filter(item => {
+    if (!isAdmin && (item.href === '/admin' || item.label === 'Admin')) return false;
+    if (!isAdmin && (item.href === '/requests' || item.label === 'Requests')) return false;
+    return true;
+  });
 
   const defaultUser = {
     name: user?.name || 'Demo User',
     email: user?.email || 'demo@company.com',
-    role: user?.role || 'employee',
+    role: userRole,
   };
 
   return (
@@ -120,7 +128,7 @@ export function AppShell({ children, user, navigation = defaultNavigation }: App
               Menu
             </div>
           )}
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
