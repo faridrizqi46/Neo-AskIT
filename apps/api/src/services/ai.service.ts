@@ -71,19 +71,11 @@ export const aiService = {
               content: `You are an IT support intent classifier. Analyze the user message and classify their intent.
 Available intents:
 - password_reset: User wants to reset or forgot password
-- email_access: User cannot access their email
-- email_password: User needs to reset email password
-- account_locked: User account is locked
-- vpn_setup: User wants to set up VPN
 - vpn_issue: VPN is not working properly
-- laptop_slow: Laptop is running slow
-- laptop_wont_start: Laptop won't start or boot issues
-- software_request: User wants to request software
-- software_install: User needs help installing software
 - wifi_issue: WiFi connectivity problems
-- security_incident: Suspicious activity or phishing
-- permission_request: User needs access/permissions
-- general_inquiry: General IT questions
+- software_request: User wants to request software
+- excel_crash: Excel application crash or not responding
+- printer_issue: Printer problems
 
 Respond with JSON in this exact format:
 {"intent": "intent_name", "confidence": 0.0-1.0, "entities": {"key": "value"}}
@@ -136,53 +128,20 @@ Extract entities like service names, action types, or problem descriptions.`
     if (lower.includes('password') && (lower.includes('reset') || lower.includes('forgot') || lower.includes('change'))) {
       return { intent: 'password_reset', confidence: 0.9, entities: { service: 'password', action: 'reset' } };
     }
-    if (lower.includes('email') || lower.includes('outlook') || lower.includes('mail')) {
-      if (lower.includes('access') || lower.includes('can\'t') || lower.includes('cannot')) {
-        return { intent: 'email_access', confidence: 0.88, entities: { service: 'email', problem: 'access' } };
-      }
-      if (lower.includes('password') || lower.includes('forgot')) {
-        return { intent: 'email_password', confidence: 0.85, entities: { service: 'email', action: 'password_reset' } };
-      }
-      return { intent: 'email_general', confidence: 0.7, entities: { service: 'email' } };
-    }
-    if (lower.includes('vpn') || lower.includes('virtual private network')) {
-      if (lower.includes('setup') || lower.includes('install') || lower.includes('configure')) {
-        return { intent: 'vpn_setup', confidence: 0.9, entities: { service: 'vpn', action: 'setup' } };
-      }
-      if (lower.includes('not working') || lower.includes('error') || lower.includes('issue')) {
-        return { intent: 'vpn_issue', confidence: 0.85, entities: { service: 'vpn', problem: 'not_working' } };
-      }
-      return { intent: 'vpn_general', confidence: 0.75, entities: { service: 'vpn' } };
-    }
-    if (lower.includes('laptop') || lower.includes('computer') || lower.includes('pc')) {
-      if (lower.includes('slow') || lower.includes('lagging') || lower.includes('hang')) {
-        return { intent: 'laptop_slow', confidence: 0.85, entities: { service: 'laptop', problem: 'slow_performance' } };
-      }
-      if (lower.includes('not starting') || lower.includes('won\'t start') || lower.includes('blue screen')) {
-        return { intent: 'laptop_wont_start', confidence: 0.88, entities: { service: 'laptop', problem: 'startup_failure' } };
-      }
-      return { intent: 'laptop_issue', confidence: 0.8, entities: { service: 'laptop' } };
-    }
-    if (lower.includes('software') || lower.includes('install') || lower.includes('app')) {
-      if (lower.includes('request') || lower.includes('need') || lower.includes('want')) {
-        return { intent: 'software_request', confidence: 0.85, entities: { category: 'software', action: 'request' } };
-      }
-      return { intent: 'software_install', confidence: 0.8, entities: { category: 'software', action: 'install' } };
+    if (lower.includes('vpn')) {
+      return { intent: 'vpn_issue', confidence: 0.85, entities: { service: 'vpn', problem: 'not_working' } };
     }
     if (lower.includes('wifi') || lower.includes('wireless') || lower.includes('internet')) {
-      if (lower.includes('not working') || lower.includes('disconnect') || lower.includes('slow')) {
-        return { intent: 'wifi_issue', confidence: 0.85, entities: { service: 'wifi', problem: 'connectivity' } };
-      }
-      return { intent: 'wifi_setup', confidence: 0.75, entities: { service: 'wifi' } };
+      return { intent: 'wifi_issue', confidence: 0.85, entities: { service: 'wifi', problem: 'connectivity' } };
     }
-    if (lower.includes('account') || lower.includes('locked') || lower.includes('disable')) {
-      return { intent: 'account_locked', confidence: 0.88, entities: { category: 'account', problem: 'locked' } };
+    if (lower.includes('software') || lower.includes('install') || lower.includes('app') || lower.includes('request')) {
+      return { intent: 'software_request', confidence: 0.85, entities: { category: 'software', action: 'request' } };
     }
-    if (lower.includes('phishing') || lower.includes('suspicious') || lower.includes('security')) {
-      return { intent: 'security_incident', confidence: 0.92, entities: { category: 'security', type: 'suspicious_activity' } };
+    if ((lower.includes('excel') || lower.includes('spreadsheet')) && (lower.includes('crash') || lower.includes('not responding') || lower.includes('hang') || lower.includes('freeze') || lower.includes('tidak bisa buka'))) {
+      return { intent: 'excel_crash', confidence: 0.88, entities: { category: 'software', name: 'excel', problem: 'crash' } };
     }
-    if (lower.includes('access') || lower.includes('permission') || lower.includes('authorize')) {
-      return { intent: 'permission_request', confidence: 0.82, entities: { category: 'access', type: 'permission' } };
+    if (lower.includes('printer') || lower.includes('print')) {
+      return { intent: 'printer_issue', confidence: 0.85, entities: { category: 'printer', problem: 'not_working' } };
     }
 
     return { intent: 'general_inquiry', confidence: 0.6, entities: {} };
@@ -200,18 +159,11 @@ Extract entities like service names, action types, or problem descriptions.`
     try {
       const intentDescriptions: Record<string, string> = {
         password_reset: 'The user wants to reset or forgot their password',
-        email_access: 'The user cannot access their email account',
-        email_password: 'The user needs to reset their email password',
-        account_locked: 'The user\'s account is locked',
-        vpn_setup: 'The user wants to set up VPN',
         vpn_issue: 'The user is having VPN issues',
-        laptop_slow: 'The user\'s laptop is running slow',
-        laptop_wont_start: 'The user\'s laptop won\'t start',
-        software_request: 'The user wants to request software',
-        software_install: 'The user needs help installing software',
         wifi_issue: 'The user has WiFi connectivity problems',
-        security_incident: 'The user is reporting a security incident',
-        permission_request: 'The user needs access permissions',
+        software_request: 'The user wants to request software',
+        excel_crash: 'The user has Excel crash issues',
+        printer_issue: 'The user has printer problems',
         general_inquiry: 'The user has a general IT question',
       };
 
@@ -270,22 +222,121 @@ Extract entities like service names, action types, or problem descriptions.`
 
   fallbackResponse(intent: string, userMessage: string): { text: string; policies: Array<{ id: string; title: string; content: string; relevance: number }> } {
     const responseTemplates: Record<string, string> = {
-      password_reset: 'I can help you reset your password! First, let me confirm - are you trying to reset your computer password or your email password? For computer password resets, you can use the self-service portal at reset.company.com. For email passwords, you\'ll need to verify your identity through our security team.',
-      email_access: 'I\'m sorry to hear you\'re having trouble accessing your email. Can you tell me what happens when you try to sign in? Do you see any error messages, or does it just not let you in? This will help me figure out the best way to assist you.',
-      email_password: 'Let me help you reset your email password! Have you tried using the password reset link on the login page? If that doesn\'t work, I can help you verify your identity through our IT security team.',
-      vpn_setup: 'I\'d be happy to help you set up VPN! To get started, I need to know which VPN client your team uses - do you have the VPN software already installed on your computer, or do you need me to guide you through the installation first?',
-      vpn_issue: 'That VPN issue sounds frustrating! Let me help you troubleshoot. Can you tell me what specific error message you\'re seeing, or does it just fail to connect? Also, are you working from home or from the office?',
-      laptop_slow: 'Nobody likes a slow laptop! Let me see if I can help speed things up. First, can you tell me which applications are running slowly? And do you notice if it\'s particularly slow when you have many programs open, or all the time?',
-      laptop_wont_start: 'That\'s concerning when a laptop won\'t start! Before we escalate this to hardware support, let\'s try a few things. Can you try a hard reset by holding the power button for 10 seconds, then trying to turn it on again? If that doesn\'t work, let me know what you see - any lights, sounds, or just a black screen.',
-      software_request: 'I can help you request software! Let me know which application you need and I\'ll submit the request for approval. What software are you looking for?',
-      software_install: 'I can help you install software! Do you have administrator access on your computer, or do you need me to request that permission be granted first?',
-      wifi_issue: 'WiFi issues can be tricky! Let\'s start with some basics - have you tried turning your WiFi off and on again, or restarting your computer? If that doesn\'t work, can you see other devices connecting to the same network, or is it just you?',
-      security_incident: 'I take security concerns seriously. Please tell me what you\'ve noticed - are you seeing suspicious emails, unauthorized access attempts, or something else? The more details you can provide, the better we can protect the company.',
-      account_locked: 'I can help you unlock your account! This usually happens after too many failed login attempts. Don\'t worry - it\'s a security feature. I can help you verify your identity and get you back in right away.',
-      permission_request: 'I can help you get the access you need! Can you tell me which system or data you need access to, and why you need it? This will help me route your request to the right person for approval.',
-      general_inquiry: userMessage 
-        ? `Thanks for reaching out! I\'m here to help with your IT needs. You mentioned: "${userMessage}". Let me think about how best to assist you. Could you give me a bit more detail about what you\'re looking for?`
-        : 'Thanks for reaching out! I\'m here to help with your IT needs. What can I assist you with today?',
+      password_reset: `Kami menerima permintaan reset password Anda.
+
+Silakan lakukan langkah berikut:
+
+1. Buka halaman reset password perusahaan
+2. Masukkan email/username Anda
+3. Ikuti instruksi yang dikirim ke email
+
+Jika masih mengalami kendala, mohon balas pesan ini dengan screenshot error yang muncul.
+
+Terima kasih.`,
+      vpn_issue: `Silakan coba langkah berikut:
+
+1. Pastikan koneksi internet stabil
+2. Disconnect lalu reconnect VPN
+3. Restart laptop/PC
+4. Pastikan username & password VPN benar
+5. Matikan antivirus/firewall sementara (jika diperbolehkan)
+
+Jika masih gagal, mohon kirim:
+
+- Screenshot error
+- Nama VPN yang digunakan
+- Waktu kejadian
+
+Agar kami dapat membantu lebih lanjut.`,
+      wifi_issue: `Kalau laptop tersambung ke Wi-Fi tapi tidak bisa internet, coba langkah berikut satu per satu:
+
+1. **Cek apakah Wi-Fi benar-benar terhubung**
+   * Pastikan ikon Wi-Fi tidak ada tanda seru / globe.
+   * Coba buka beberapa situs berbeda.
+
+2. **Tes perangkat lain**
+   * Jika HP juga tidak bisa internet di Wi-Fi yang sama → masalah kemungkinan di router atau ISP.
+   * Jika HP bisa → masalah ada di laptop.
+
+3. **Restart sederhana**
+   * Restart laptop.
+   * Restart modem/router (cabut listrik 30 detik).
+
+4. **Forget Wi-Fi lalu sambung ulang**
+   * Windows:
+     * Settings → Network & Internet → Wi-Fi → Manage known networks → pilih Wi-Fi → Forget.
+     * Sambungkan lagi dan masukkan password.
+
+5. **Matikan VPN / Proxy**
+   * VPN sering bikin koneksi "connected but no internet".
+
+6. **Reset jaringan Windows**
+   Buka Command Prompt sebagai Administrator lalu jalankan:
+\`\`\`bat
+ipconfig /flushdns
+ipconfig /release
+ipconfig /renew
+netsh winsock reset
+\`\`\`
+Setelah itu restart laptop.
+
+7. **Cek adaptor jaringan**
+   * Device Manager → Network adapters.
+   * Pastikan tidak ada tanda kuning.
+   * Klik kanan adaptor Wi-Fi → Disable → Enable.
+
+8. **Ganti DNS**
+   Gunakan:
+   * \`8.8.8.8\`
+   * \`1.1.1.1\`
+
+9. **Update driver Wi-Fi**
+   * Device Manager → adaptor Wi-Fi → Update driver.`,
+      software_request: `Permintaan install software memerlukan approval terlebih dahulu.
+
+Tiket support: SR00012
+
+Mohon menunggu proses persetujuan sebelum instalasi dilakukan.
+
+Terima kasih.`,
+      excel_crash: `Kami menerima laporan bahwa aplikasi Ms. Excel mengalami crash/tidak dapat dibuka.
+
+Silakan coba langkah berikut:
+
+1. Tutup aplikasi lalu buka kembali
+2. Restart laptop/PC
+3. Pastikan tidak ada update Windows yang pending
+4. Coba buka aplikasi dalam Safe Mode
+5. Pastikan file yang dibuka tidak corrupt
+
+Untuk Microsoft Excel:
+
+* Tekan Windows + R
+* Ketik: excel /safe
+* Tekan Enter
+
+Jika masih bermasalah, mohon kirim:
+
+* Screenshot error
+* Waktu kejadian
+* File yang menyebabkan crash (jika ada)
+
+Terima kasih.`,
+      printer_issue: `Silakan coba langkah berikut:
+
+1. Pastikan printer dalam keadaan ON
+2. Periksa koneksi kabel/Wi-Fi printer
+3. Pastikan printer tidak dalam status Offline
+4. Restart printer dan laptop
+5. Coba print ulang dokumen
+
+Jika masih bermasalah, mohon kirim:
+
+* Nama printer
+* Screenshot error
+* Lokasi printer
+
+Terima kasih.`,
     };
 
     const baseText = responseTemplates[intent] || responseTemplates.general_inquiry;
