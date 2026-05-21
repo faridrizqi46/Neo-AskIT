@@ -25,7 +25,8 @@ export async function api<T>(endpoint: string, options: RequestOptions = {}): Pr
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+    const errorBody = await response.text();
+    throw new Error(`API Error ${response.status}: ${errorBody || response.statusText}`);
   }
 
   return response.json();

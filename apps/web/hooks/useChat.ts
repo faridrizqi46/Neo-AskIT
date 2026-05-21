@@ -25,8 +25,8 @@ export function useChat() {
       try {
         const response = await chatApi.sendMessage(content, sessionId || undefined);
 
-        if (response.requestId && !sessionId) {
-          setSessionId(response.requestId);
+        if (response.sessionId && !sessionId) {
+          setSessionId(response.sessionId);
         }
 
         addMessage({
@@ -41,8 +41,9 @@ export function useChat() {
         }
       } catch (error) {
         console.error('Failed to send message:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         addMessage({
-          content: 'Sorry, I encountered an error. Please try again.',
+          content: `Sorry, I encountered an error: ${errorMessage}`,
           type: 'system',
         });
       } finally {
