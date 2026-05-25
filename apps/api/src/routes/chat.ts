@@ -41,32 +41,37 @@ export async function chatRoutes(fastify: FastifyInstance) {
     await sessionRepo.updateLastIntent(activeSessionId, classification.intent);
 
     if (classification.confidence >= HIGH_CONFIDENCE_THRESHOLD && !activeRequestId) {
-      const categoryMap: Record<string, string> = {
-        password_reset: 'account',
-        email_access: 'account',
-        email_password: 'account',
-        account_locked: 'account',
-        vpn_setup: 'network',
-        vpn_issue: 'network',
-        wifi_issue: 'network',
-        laptop_slow: 'hardware',
-        laptop_wont_start: 'hardware',
-        software_request: 'software',
-        software_install: 'software',
-        security_incident: 'security',
-        permission_request: 'access',
-      };
+      try {
+        const categoryMap: Record<string, string> = {
+          password_reset: 'account',
+          email_access: 'account',
+          email_password: 'account',
+          account_locked: 'account',
+          vpn_setup: 'network',
+          vpn_issue: 'network',
+          wifi_issue: 'network',
+          laptop_slow: 'hardware',
+          laptop_wont_start: 'hardware',
+          software_request: 'software',
+          software_install: 'software',
+          security_incident: 'security',
+          permission_request: 'access',
+        };
 
-      const category = categoryMap[classification.intent] || 'general';
+        const category = categoryMap[classification.intent] || 'general';
 
-      const newRequest = await requestRepo.create({
-        employeeId: user.sub,
-        title: `${classification.intent.replace(/_/g, ' ')} - ${content.substring(0, 50)}`,
-        category,
-        priority: classification.intent === 'security_incident' ? 'urgent' : 'medium',
-        intent: classification.intent,
-      });
-      activeRequestId = newRequest.id;
+        const newRequest = await requestRepo.create({
+          employeeId: user.sub,
+          title: `${classification.intent.replace(/_/g, ' ')} - ${content.substring(0, 50)}`,
+          category,
+          priority: classification.intent === 'security_incident' ? 'urgent' : 'medium',
+          intent: classification.intent,
+        });
+        activeRequestId = newRequest.id;
+        console.log('[chat] Created request:', activeRequestId);
+      } catch (err) {
+        console.error('[chat] Failed to create request:', err);
+      }
     }
 
     const suggestedActions = intentService.getSuggestedActions(classification.intent);

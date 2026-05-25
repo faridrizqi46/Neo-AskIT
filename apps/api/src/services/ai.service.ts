@@ -136,7 +136,7 @@ Extract entities like service names, action types, or problem descriptions.`
   fallbackClassification(text: string): IntentClassification {
     const lower = text.toLowerCase();
 
-    if (lower.includes('password') && (lower.includes('reset') || lower.includes('forgot') || lower.includes('change'))) {
+    if (lower.includes('password') && (lower.includes('reset') || lower.includes('forgot') || lower.includes('change') || lower.includes('how') || lower.includes('lupa'))) {
       return { intent: 'password_reset', confidence: 0.9, entities: { service: 'password', action: 'reset' } };
     }
     if (lower.includes('vpn')) {
@@ -299,92 +299,82 @@ Agar kami dapat membantu lebih lanjut.`,
       wifi_issue: {
         en: `If your laptop is connected to Wi-Fi but can't access the internet, try these steps one by one:
 
-1. **Check if Wi-Fi is actually connected**
-   * Make sure the Wi-Fi icon doesn't have an exclamation mark / globe.
-   * Try opening a few different websites.
+1. Check if Wi-Fi is actually connected
+     - Make sure the Wi-Fi icon does not have an exclamation mark / globe
+     - Try opening a few different websites
 
-2. **Test other devices**
-   * If your phone also can't access the internet on the same Wi-Fi → the problem is likely with the router or ISP.
-   * If your phone can → the problem is on your laptop.
+  2. Test other devices
+     - If your phone also cannot access the internet on the same Wi-Fi, the problem is likely with the router or ISP
+     - If your phone can, the problem is on your laptop
 
-3. **Simple restart**
-   * Restart your laptop.
-   * Restart your modem/router (unplug for 30 seconds).
+  3. Simple restart
+     - Restart your laptop
+     - Restart your modem/router (unplug for 30 seconds)
 
-4. **Forget Wi-Fi then reconnect**
-   * Windows:
-     * Settings → Network & Internet → Wi-Fi → Manage known networks → select Wi-Fi → Forget.
-     * Reconnect and enter the password.
+  4. Forget Wi-Fi then reconnect (Windows)
+     - Settings > Network & Internet > Wi-Fi > Manage known networks > select Wi-Fi > Forget
+     - Reconnect and enter the password
 
-5. **Turn off VPN / Proxy**
-   * VPNs often cause "connected but no internet" issues.
+  5. Turn off VPN / Proxy
+     - VPNs often cause "connected but no internet" issues
 
-6. **Reset Windows network**
-   Open Command Prompt as Administrator and run:
-\`\`\`bat
-ipconfig /flushdns
-ipconfig /release
-ipconfig /renew
-netsh winsock reset
-\`\`\`
-After that, restart your laptop.
+  6. Reset Windows network
+     - Open Command Prompt as Administrator and run:
+       ipconfig /flushdns
+       ipconfig /release
+       ipconfig /renew
+       netsh winsock reset
+     - After that, restart your laptop.
 
-7. **Check network adapter**
-   * Device Manager → Network adapters.
-   * Make sure there are no yellow icons.
-   * Right-click on Wi-Fi adapter → Disable → Enable.
+  7. Check network adapter
+     - Device Manager > Network adapters
+     - Make sure there are no yellow icons
+     - Right-click on Wi-Fi adapter > Disable > Enable
 
-8. **Change DNS**
-   Use:
-   * \`8.8.8.8\`
-   * \`1.1.1.1\`
+  8. Change DNS
+     - Use 8.8.8.8 or 1.1.1.1
 
-9. **Update Wi-Fi driver**
-   * Device Manager → Wi-Fi adapter → Update driver.`,
+  9. Update Wi-Fi driver
+     - Device Manager > Wi-Fi adapter > Update driver`,
         id: `Jika laptop Anda terhubung ke Wi-Fi tetapi tidak bisa mengakses internet, coba langkah-langkah berikut:
 
-1. **Cek apakah Wi-Fi benar-benar terhubung**
-   * Pastikan ikon Wi-Fi tidak memiliki tanda seru / globe.
-   * Coba buka beberapa website berbeda.
+1. Cek apakah Wi-Fi benar-benar terhubung
+     - Pastikan ikon Wi-Fi tidak memiliki tanda seru / globe
+     - Coba buka beberapa website berbeda
 
-2. **Tes perangkat lain**
-   * Jika HP Anda juga tidak bisa internet di Wi-Fi yang sama → masalah kemungkinan di router atau ISP.
-   * Jika HP bisa → masalah ada di laptop Anda.
+  2. Tes perangkat lain
+     - Jika HP Anda juga tidak bisa internet di Wi-Fi yang sama, masalah kemungkinan di router atau ISP
+     - Jika HP bisa, masalah ada di laptop Anda
 
-3. **Restart sederhana**
-   * Restart laptop Anda.
-   * Restart modem/router (cabut selama 30 detik).
+  3. Restart sederhana
+     - Restart laptop Anda
+     - Restart modem/router (cabut selama 30 detik)
 
-4. **Lupa Wi-Fi lalu sambungkan kembali**
-   * Windows:
-     * Settings → Network & Internet → Wi-Fi → Manage known networks → pilih Wi-Fi → Forget.
-     * Sambungkan kembali dan masukkan password.
+  4. Lupa Wi-Fi lalu sambungkan kembali (Windows)
+     - Settings > Network & Internet > Wi-Fi > Manage known networks > pilih Wi-Fi > Forget
+     - Sambungkan kembali dan masukkan password
 
-5. **Matikan VPN / Proxy**
-   * VPN sering menyebabkan masalah "terhubung tapi tidak ada internet".
+  5. Matikan VPN / Proxy
+     - VPN sering menyebabkan masalah "terhubung tapi tidak ada internet"
 
-6. **Reset network Windows**
-   Buka Command Prompt as Administrator dan jalankan:
-\`\`\`bat
-ipconfig /flushdns
-ipconfig /release
-ipconfig /renew
-netsh winsock reset
-\`\`\`
-Setelah itu, restart laptop Anda.
+  6. Reset network Windows
+     - Buka Command Prompt as Administrator dan jalankan:
+       ipconfig /flushdns
+       ipconfig /release
+       ipconfig /renew
+       netsh winsock reset
+     - Setelah itu, restart laptop Anda.
 
-7. **Cek network adapter**
-   * Device Manager → Network adapters.
-   * Pastikan tidak ada ikon kuning.
-   * Klik kanan pada Wi-Fi adapter → Disable → Enable.
+  7. Cek network adapter
+     - Device Manager > Network adapters
+     - Pastikan tidak ada ikon kuning
+     - Klik kanan pada Wi-Fi adapter > Disable > Enable
 
-8. **Ganti DNS**
-   Gunakan:
-   * \`8.8.8.8\`
-   * \`1.1.1.1\`
+  8. Ganti DNS
+     - Gunakan 8.8.8.8 atau 1.1.1.1
 
-9. **Update driver Wi-Fi**
-   * Device Manager → Wi-Fi adapter → Update driver.`,
+  9. Update driver Wi-Fi
+     - Device Manager > Wi-Fi adapter > Update driver`,
       },
       software_request: {
         en: `Software installation request requires approval first.

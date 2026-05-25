@@ -1,6 +1,8 @@
-import { PrismaClient, ActionType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+type ActionType = 'form' | 'redirect' | 'ticket' | 'notification' | 'escalate';
 
 interface ActionData {
   id: string;
@@ -103,12 +105,12 @@ export const actionService = {
       password_reset: [
         {
           type: 'form',
-          label: 'Reset Password',
+          label: '📝 Reset Password Form',
           payload: {
             form: {
               fields: [
-                { name: 'email', label: 'Email Address', type: 'email', required: true },
-                { name: 'employeeId', label: 'Employee ID', type: 'text', required: true },
+                { name: 'email', label: 'Email Address', type: 'email', required: true, placeholder: 'your.email@company.com' },
+                { name: 'employeeId', label: 'Employee ID', type: 'text', required: true, placeholder: 'EMP-0000' },
               ],
               submitLabel: 'Send Reset Link',
             },
@@ -148,6 +150,39 @@ export const actionService = {
               description: '',
               priority: 'medium',
               category: 'account',
+            },
+          },
+        },
+      ],
+      software_request: [
+        {
+          type: 'form',
+          label: '📄 Software Request Form',
+          payload: {
+            form: {
+              fields: [
+                { name: 'software_name', label: 'Software Name', type: 'text', required: true, placeholder: 'e.g., Adobe Creative Cloud' },
+                { name: 'purpose', label: 'Purpose', type: 'select', required: true, options: ['Design', 'Development', '数据分析', 'Project Management', 'Lainnya'] },
+                { name: 'manager', label: 'Manager Approval', type: 'text', required: true, placeholder: 'Nama manager Anda' },
+                { name: 'justification', label: 'Business Justification', type: 'text', required: false, placeholder: 'Jelaskan kebutuhan bisnis...' },
+              ],
+              submitLabel: 'Send Request',
+            },
+          },
+        },
+      ],
+      software_install: [
+        {
+          type: 'form',
+          label: 'Software Installation Request',
+          payload: {
+            form: {
+              fields: [
+                { name: 'software_name', label: 'Software Name', type: 'text', required: true },
+                { name: 'version', label: 'Version', type: 'text', required: false },
+                { name: 'license_key', label: 'License Key (optional)', type: 'text', required: false },
+              ],
+              submitLabel: 'Submit Request',
             },
           },
         },
@@ -198,10 +233,24 @@ export const actionService = {
           },
         },
       ],
+      wifi_issue: [
+        {
+          type: 'ticket',
+          label: '✅ Buat Tiket Support',
+          payload: {
+            ticket: {
+              title: 'WiFi Connection Issue',
+              description: 'User reported slow WiFi connection',
+              priority: 'medium',
+              category: 'network',
+            },
+          },
+        },
+      ],
       general_inquiry: [
         {
           type: 'ticket',
-          label: 'Create Support Ticket',
+          label: '✅ Buat Tiket Support',
           payload: {
             ticket: {
               title: 'General IT Inquiry',

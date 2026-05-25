@@ -117,6 +117,33 @@ export async function requestsRoutes(fastify: FastifyInstance) {
     return reply.send(updated);
   });
 
+  fastify.post('/:id/submit', { preHandler: [authMiddleware] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const user = request.user as AuthUser;
+    const formData = request.body as Record<string, string>;
+
+    const existingRequest = await requestRepo.findById(id);
+    if (!existingRequest) {
+      return reply.status(404).send({ error: 'Request not found' });
+    }
+
+    if (user.role === 'employee' && existingRequest.employeeId !== user.sub) {
+      return reply.status(403).send({ error: 'Access denied' });
+    }
+
+    await messageRepo.create({
+      requestId: id,
+      senderId: user.sub,
+      content: `Form submitted: ${JSON.stringify(formData)}`,
+      messageType: 'user',
+      metadata: { formData },
+    });
+
+    await requestRepo.update(id, { status: 'pending' });
+
+    return reply.send({ success: true, message: 'Form submitted successfully' });
+  });
+
   fastify.post('/:id/actions', { preHandler: [authMiddleware] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as AuthUser;

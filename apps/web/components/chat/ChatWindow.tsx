@@ -1,14 +1,51 @@
-'use client';
+{'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChat } from '../../hooks/useChat';
+
+interface FormField {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+}
 
 interface ChatWindowProps {
   sessionId?: string;
 }
 
 export function ChatWindow({ sessionId }: ChatWindowProps) {
-  const { messages, isLoading, sendMessage, resetChat } = useChat();
+  const { messages, isLoading, pendingActions, activeForm, activeRequestId, sendMessage, handleActionClick, submitForm, resetChat } = useChat();
+  const [showModal, setShowModal] = useState(false);
+  const [modalFields, setModalFields] = useState<FormField[]>([]);
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+
+  // Listen for activeForm changes to show modal
+  useEffect(() => {
+    if (activeForm && activeForm.fields) {
+      setModalFields(activeForm.fields);
+      setShowModal(true);
+      setFormValues({});
+    }
+  }, [activeForm]);
+
+  const handleFormChange = (name: string, value: string) => {
+    setFormValues(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm(formValues);
+    setShowModal(false);
+    setFormValues({});
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setFormValues({});
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -103,7 +140,85 @@ export function ChatWindow({ sessionId }: ChatWindowProps) {
             </div>
           </div>
         )}
+
+        {/* Action Buttons */}
+        {pendingActions.length > 0 && !isLoading && (
+          <div className="flex flex-wrap gap-2 animate-fade-in">
+            {pendingActions.map((action, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleActionClick(action)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shadow-lg shadow-primary/25"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-background rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Fill Form</h3>
+              <button onClick={closeModal} className="text-muted-foreground hover:text-foreground">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {modalFields.map((field) => (
+                <div key={field.name}>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {field.label} {field.required && <span className="text-destructive">*</span>}
+                  </label>
+                  {field.type === 'select' ? (
+                    <select
+                      value={formValues[field.name] || ''}
+                      onChange={(e) => handleFormChange(field.name, e.target.value)}
+                      required={field.required}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="">Select...</option>
+                      {field.options?.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
+                      value={formValues[field.name] || ''}
+                      onChange={(e) => handleFormChange(field.name, e.target.value)}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors text-sm font-medium"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Input */}
       <form className="p-4 border-t border-border">

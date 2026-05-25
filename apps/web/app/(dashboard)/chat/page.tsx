@@ -5,11 +5,48 @@ import { useRouter } from 'next/navigation';
 import { useChat } from '../../../hooks/useChat';
 import { cn } from '../../../lib/utils';
 
+interface FormField {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+}
+
 export default function ChatPage() {
   const router = useRouter();
-  const { messages, isLoading, currentIntent, sendMessage, resetChat } = useChat();
+  const { messages, isLoading, currentIntent, pendingActions, activeForm, sendMessage, handleActionClick, submitForm, resetChat } = useChat();
   const [input, setInput] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalFields, setModalFields] = useState<FormField[]>([]);
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Show modal when activeForm changes
+  useEffect(() => {
+    if (activeForm && activeForm.fields) {
+      setModalFields(activeForm.fields);
+      setShowModal(true);
+      setFormValues({});
+    }
+  }, [activeForm]);
+
+  const handleFormChange = (name: string, value: string) => {
+    setFormValues(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm(formValues);
+    setShowModal(false);
+    setFormValues({});
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setFormValues({});
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,10 +79,10 @@ export default function ChatPage() {
 
   const suggestedQuestions = [
     'How do I reset my password?',
-    'I need VPN access',
-    'Install software on my machine',
-    'Email not working',
-    'Request hardware upgrade',
+    'I have trouble with my Wi-Fi connection',
+    'How do I request new software?',
+    'I cannot connect to my VPN',
+    'I cannot print my document',
   ];
 
   return (
@@ -184,6 +221,21 @@ export default function ChatPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  {pendingActions.length > 0 && !isLoading && (
+                    <div className="flex flex-wrap gap-2 animate-fade-in">
+                      {pendingActions.map((action, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleActionClick(action)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
               <div ref={messagesEndRef} />
@@ -215,6 +267,63 @@ export default function ChatPage() {
           </div>
         </main>
       </div>
+
+      {/* Simple Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 border border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Fill Form</h3>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {modalFields.map((field) => (
+                <div key={field.name}>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {field.label}
+                </label>
+                  {field.type === 'select' ? (
+                    <select
+                      value={formValues[field.name] || ''}
+                      onChange={(e) => handleFormChange(field.name, e.target.value)}
+                      required={field.required}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+                    >
+                      <option value="">Select...</option>
+                      {field.options?.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
+                      value={formValues[field.name] || ''}
+                      onChange={(e) => handleFormChange(field.name, e.target.value)}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm font-medium"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
