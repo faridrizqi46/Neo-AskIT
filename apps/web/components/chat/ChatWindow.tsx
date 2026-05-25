@@ -47,6 +47,8 @@ export function ChatWindow({ sessionId }: ChatWindowProps) {
     setFormValues({});
   };
 
+  const isFormFilled = modalFields.every(field => !field.required || formValues[field.name]?.trim());
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -142,17 +144,19 @@ export function ChatWindow({ sessionId }: ChatWindowProps) {
         )}
 
         {/* Action Buttons */}
-        {pendingActions.length > 0 && !isLoading && (
+        {pendingActions.filter(a => a.type !== 'redirect').length > 0 && !isLoading && (
           <div className="flex flex-wrap gap-2 animate-fade-in">
-            {pendingActions.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleActionClick(action)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shadow-lg shadow-primary/25"
-              >
-                {action.label}
-              </button>
-            ))}
+            {pendingActions
+              .filter(a => a.type !== 'redirect')
+              .map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleActionClick(action)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shadow-lg shadow-primary/25"
+                >
+                  {action.label}
+                </button>
+              ))}
           </div>
         )}
       </div>
@@ -209,8 +213,8 @@ export function ChatWindow({ sessionId }: ChatWindowProps) {
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors text-sm font-medium"
+                  disabled={isLoading || !isFormFilled}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                 >
                   Submit
                 </button>

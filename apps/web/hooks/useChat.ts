@@ -178,6 +178,7 @@ export function useChat() {
         });
 
         setActiveForm(null);
+        setPendingActions([]);
       } catch (error) {
         console.error('Failed to submit form:', error);
         addMessage({

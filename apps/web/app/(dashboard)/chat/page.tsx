@@ -223,17 +223,19 @@ export default function ChatPage() {
                   )}
 
                   {/* Action Buttons */}
-                  {pendingActions.length > 0 && !isLoading && (
+                  {pendingActions.filter(a => a.type !== 'redirect').length > 0 && !isLoading && (
                     <div className="flex flex-wrap gap-2 animate-fade-in">
-                      {pendingActions.map((action, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleActionClick(action)}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                        >
-                          {action.label}
-                        </button>
-                      ))}
+                      {pendingActions
+                        .filter(a => a.type !== 'redirect')
+                        .map((action, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleActionClick(action)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                          >
+                            {action.label}
+                          </button>
+                        ))}
                     </div>
                   )}
                 </>
