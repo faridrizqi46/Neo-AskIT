@@ -377,20 +377,8 @@ Agar kami dapat membantu lebih lanjut.`,
      - Device Manager > Wi-Fi adapter > Update driver`,
       },
       software_request: {
-        en: `Software installation request requires approval first.
-
-Support ticket: SR00012
-
-Please wait for the approval process before installation.
-
-Thank you.`,
-        id: `Permintaan instalasi software memerlukan persetujuan terlebih dahulu.
-
-Support ticket: SR00012
-
-Mohon tunggu proses persetujuan sebelum instalasi.
-
-Terima kasih.`,
+        en: `Software installation request has been received. Please fill out the form below.`,
+        id: `Permintaan instalasi software telah diterima. Silakan isi form berikut.`,
       },
       excel_crash: {
         en: `We have received a report that Microsoft Excel application is crashing/cannot be opened.
