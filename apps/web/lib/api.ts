@@ -25,7 +25,8 @@ export async function api<T>(endpoint: string, options: RequestOptions = {}): Pr
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+    const errorBody = await response.text();
+    throw new Error(`API Error ${response.status}: ${errorBody || response.statusText}`);
   }
 
   return response.json();
@@ -68,6 +69,8 @@ export const requests = {
   create: (data: any) => api<any>('/api/v1/requests', { method: 'POST', body: data }),
   update: (id: string, data: any) => api<any>(`/api/v1/requests/${id}`, { method: 'PATCH', body: data }),
   delete: (id: string) => api(`/api/v1/requests/${id}`, { method: 'DELETE' }),
+  submitForm: (requestId: string, formData: Record<string, string>) =>
+    api<any>(`/api/v1/requests/${requestId}/submit`, { method: 'POST', body: formData }),
 };
 
 export const policies = {

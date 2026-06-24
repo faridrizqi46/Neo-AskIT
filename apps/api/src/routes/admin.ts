@@ -108,7 +108,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
   });
 
   fastify.patch('/tickets/:id/assign', { preHandler: [authMiddleware] }, async (request, reply) => {
-    const user = request.user as { role: string };
+    const user = request.user as { role: string; sub: string };
     if (user.role !== 'support' && user.role !== 'admin') {
       return reply.status(403).send({ error: 'Access denied' });
     }
